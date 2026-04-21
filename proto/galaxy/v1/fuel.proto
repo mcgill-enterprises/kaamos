@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package galaxy.v1;
+
+option java_package = "com.kafkatutorial.galaxy.v1";
+option java_multiple_files = true;
+option go_package = "github.com/kafka-tutorial/galaxy/v1;galaxyv1";
+
+// FuelRequested is emitted when a ship initiates a refueling request at a station.
+// Partition key: ship_id
+message FuelRequested {
+  string ship_id = 1;
+  string ship_name = 2;
+  string station_id = 3;
+  double current_fuel_percent = 4;
+  double requested_fuel_units = 5;
+  int64 requested_at_unix = 6;
+}
+
+// FuelReserved is emitted by a station confirming it can fulfil a fuel request.
+// Partition key: ship_id
+message FuelReserved {
+  string ship_id = 1;
+  string station_id = 2;
+  double reserved_fuel_units = 3;
+  int64 reserved_at_unix = 4;
+}
+
+// FuelCompleted is emitted when refueling is finished.
+// Partition key: ship_id
+message FuelCompleted {
+  string ship_id = 1;
+  string ship_name = 2;
+  string station_id = 3;
+  double fuel_units_transferred = 4;
+  double final_fuel_percent = 5;
+  int64 completed_at_unix = 6;
+}
+
+// StationFuelDepleted is emitted when a station's fuel reserves drop critically low.
+// Partition key: station_id
+message StationFuelDepleted {
+  string station_id = 1;
+  string station_name = 2;
+  double remaining_fuel_units = 3;
+  int64 depleted_at_unix = 4;
+}

@@ -1,0 +1,24 @@
+{
+  "name": "kafka-tutorial",
+  "version": "1.0.0",
+  "description": "A Kafka event backbone tutorial set in a galaxy-scale space gaming universe.",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev:producer": "npm run dev --workspace=packages/producer",
+    "dev:consumer": "npm run dev --workspace=packages/consumer",
+    "proto:generate": "buf generate",
+    "clean": "npm run clean --workspaces --if-present && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

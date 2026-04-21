@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package galaxy.v1;
+
+option java_package = "com.kafkatutorial.galaxy.v1";
+option java_multiple_files = true;
+option go_package = "github.com/kafka-tutorial/galaxy/v1;galaxyv1";
+
+// ShipDeparted is emitted when a ship leaves a station or waypoint.
+// Partition key: ship_id
+message ShipDeparted {
+  string ship_id = 1;
+  string ship_name = 2;
+  string origin_station_id = 3;
+  string destination_station_id = 4;
+  string sector_id = 5;
+  double fuel_level_percent = 6;
+  int64 departed_at_unix = 7;
+}
+
+// ShipArrived is emitted when a ship reaches its destination.
+// Partition key: ship_id
+message ShipArrived {
+  string ship_id = 1;
+  string ship_name = 2;
+  string station_id = 3;
+  string sector_id = 4;
+  double fuel_level_percent = 5;
+  int64 arrived_at_unix = 6;
+}
+
+// ShipDistressSignal is emitted when a ship broadcasts an emergency.
+// Partition key: ship_id
+message ShipDistressSignal {
+  string ship_id = 1;
+  string ship_name = 2;
+  string sector_id = 3;
+  DistressReason reason = 4;
+  double fuel_level_percent = 5;
+  int64 signaled_at_unix = 6;
+
+  enum DistressReason {
+    DISTRESS_REASON_UNSPECIFIED = 0;
+    DISTRESS_REASON_FUEL_CRITICAL = 1;
+    DISTRESS_REASON_HULL_BREACH = 2;
+    DISTRESS_REASON_NAVIGATION_FAILURE = 3;
+    DISTRESS_REASON_HOSTILE_ENCOUNTER = 4;
+  }
+}

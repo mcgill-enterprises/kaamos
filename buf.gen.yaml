@@ -1,0 +1,7 @@
+version: v2
+plugins:
+  - remote: buf.build/bufbuild/es
+    out: packages/shared/src/generated
+    opt:
+      - target=ts
+      - js_import_style=module

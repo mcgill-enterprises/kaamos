@@ -1,0 +1,60 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka-tuonela
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_JMX_PORT: 9101
+      CLUSTER_ID: "tuonela-cluster-v1"
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Creating topics in the Helka Expanse...'
+
+      kafka-topics --bootstrap-server kafka:9092 --create \
+        --topic galaxy.ships.navigation \
+        --partitions 6 \
+        --replication-factor 1
+
+      kafka-topics --bootstrap-server kafka:9092 --create \
+        --topic galaxy.ships.fuel \
+        --partitions 6 \
+        --replication-factor 1
+
+      kafka-topics --bootstrap-server kafka:9092 --create \
+        --topic galaxy.stations.docking \
+        --partitions 3 \
+        --replication-factor 1
+
+      kafka-topics --bootstrap-server kafka:9092 --create \
+        --topic galaxy.sectors.alerts \
+        --partitions 3 \
+        --replication-factor 1
+
+      echo 'Topics created. The void is ready.'
+      "

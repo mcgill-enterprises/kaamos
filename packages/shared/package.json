@@ -1,0 +1,19 @@
+{
+  "name": "@kafka-tutorial/shared",
+  "version": "1.0.0",
+  "description": "Shared CloudEvents helpers and generated Protobuf types.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "cloudevents": "^8.0.0",
+    "@bufbuild/protobuf": "^1.10.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

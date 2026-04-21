@@ -1,0 +1,21 @@
+node_modules/
+dist/
+*.js.map
+*.d.ts.map
+
+# Generated Protobuf — commit these so readers don't need to run buf
+# to browse the repo. Uncomment to treat as build artifacts instead.
+# packages/shared/src/generated/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
