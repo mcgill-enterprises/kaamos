@@ -167,7 +167,7 @@ Events for different ships are independent and may be processed in parallel.
 
 Kaamos is set in the Helka Expanse — the oldest sector of a galaxy-scale
 shipping network, where spacecraft navigate between refueling stations
-with Finnish names and a tendency to disappear.
+and have a tendency to disappear.
 
 See [WORLDBUILDING.md](./WORLDBUILDING.md) for lore, naming sources, and faction notes.
 
