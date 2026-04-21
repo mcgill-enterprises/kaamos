@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package galaxy.v1;
+
+option java_package = "com.kafkatutorial.galaxy.v1";
+option java_multiple_files = true;
+option go_package = "github.com/kafka-tutorial/galaxy/v1;galaxyv1";
+
+// SectorDisrupted is emitted when a sector becomes destabilised.
+// For Hiljaisuus, this triggers fuel price recalculation at all stations
+// in the Helka Expanse.
+// Partition key: sector_id
+message SectorDisrupted {
+  string sector_id           = 1;
+  string sector_name         = 2;
+  float  severity            = 3;  // 0.0 – 1.0. 1.0 = total blockage.
+  string source_faction      = 4;  // Who or what caused this. May be empty. May be unknowable.
+  string notes               = 5;  // Free-form. For things that don't fit anywhere else.
+  int64  disrupted_at_unix   = 6;
+}
+
+// SectorStabilized is emitted when a disrupted sector returns to normal.
+// Partition key: sector_id
+message SectorStabilized {
+  string sector_id           = 1;
+  string sector_name         = 2;
+  int64  disrupted_at_unix   = 3;  // When the disruption began — for duration calculation.
+  int64  stabilized_at_unix  = 4;
+}
+
+// StationFuelPriceUpdated is emitted when a station recalculates its fuel price.
+// Fired in response to SectorDisrupted, SectorStabilized, or reserve changes.
+// Partition key: station_id
+message StationFuelPriceUpdated {
+  string      station_id        = 1;
+  string      station_name      = 2;
+  string      sector_id         = 3;  // The sector that triggered repricing.
+  double      previous_price    = 4;
+  double      new_price         = 5;
+  PriceReason reason            = 6;
+  int64       effective_at_unix = 7;
+
+  enum PriceReason {
+    PRICE_REASON_UNSPECIFIED = 0;
+    PRICE_REASON_NORMAL      = 1;  // Baseline — no disruption.
+    PRICE_REASON_DISRUPTION  = 2;  // Hiljaisuus or another chokepoint destabilised.
+    PRICE_REASON_RATIONING   = 3;  // Pohjan Neito has begun rationing.
+    PRICE_REASON_RESUPPLY    = 4;  // Convoy arrived, reserves restored.
+  }
+}
+
+// StationFuelReserveUpdated is emitted when a station's reserve level changes.
+// Fired on drawdown (ships fueling) or resupply (convoy arrives).
+// Partition key: station_id
+message StationFuelReserveUpdated {
+  string       station_id          = 1;
+  string       station_name        = 2;
+  double       previous_fuel_units = 3;
+  double       new_fuel_units      = 4;
+  double       capacity            = 5;
+  ReserveEvent event_type          = 6;
+  int64        updated_at_unix     = 7;
+
+  enum ReserveEvent {
+    RESERVE_EVENT_UNSPECIFIED = 0;
+    RESERVE_EVENT_DRAWDOWN    = 1;  // Ships consuming reserves faster than resupply.
+    RESERVE_EVENT_RESUPPLY    = 2;  // Convoy arrived.
+    RESERVE_EVENT_RATIONING   = 3;  // Pohjan Neito cut the flow.
+  }
+}

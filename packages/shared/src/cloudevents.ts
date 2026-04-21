@@ -58,6 +58,12 @@ export const GalaxyEventType = {
   FUEL_RESERVED:          'com.kafkatutorial.galaxy.fuel.reserved',
   FUEL_COMPLETED:         'com.kafkatutorial.galaxy.fuel.completed',
   STATION_FUEL_DEPLETED:  'com.kafkatutorial.galaxy.station.fuel_depleted',
+
+  // Volatility
+  SECTOR_DISRUPTED:              'com.kafkatutorial.galaxy.sector.disrupted',
+  SECTOR_STABILIZED:             'com.kafkatutorial.galaxy.sector.stabilized',
+  STATION_FUEL_PRICE_UPDATED:    'com.kafkatutorial.galaxy.station.fuel_price_updated',
+  STATION_FUEL_RESERVE_UPDATED:  'com.kafkatutorial.galaxy.station.fuel_reserve_updated',
 } as const;
 
 export type GalaxyEventType = typeof GalaxyEventType[keyof typeof GalaxyEventType];

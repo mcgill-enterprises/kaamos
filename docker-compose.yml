@@ -41,3 +41,35 @@ services:
         kafka-topics --bootstrap-server kafka:29092 --create --topic galaxy.stations.docking --partitions 3 --replication-factor 1
         kafka-topics --bootstrap-server kafka:29092 --create --topic galaxy.sectors.alerts --partitions 3 --replication-factor 1
         echo 'Topics created. The void is ready.'
+
+  cockroachdb:
+    image: cockroachdb/cockroach:v24.1.0
+    container_name: torakka-db
+    ports:
+      - "26257:26257"   # SQL / pgwire
+      - "8080:8080"     # Admin UI
+    command: start-single-node --insecure
+    volumes:
+      - torakka-data:/cockroach/cockroach-data
+    healthcheck:
+      test: ["CMD", "cockroach", "sql", "--insecure", "-e", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  cockroachdb-init:
+    image: cockroachdb/cockroach:v24.1.0
+    container_name: torakka-init
+    depends_on:
+      cockroachdb:
+        condition: service_healthy
+    volumes:
+      - ./packages/torakka/schema.sql:/schema.sql:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        cockroach sql --insecure --host=cockroachdb:26257 < /schema.sql
+        echo 'Torakka schema initialised. The void remembers.'
+
+volumes:
+  torakka-data:
