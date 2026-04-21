@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "paths": {
+      "@bufbuild/protobuf": ["../../node_modules/@bufbuild/protobuf/dist/esm/index.d.ts"],
+      "@bufbuild/protobuf/codegenv2": ["../../node_modules/@bufbuild/protobuf/dist/esm/codegenv2/index.d.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]

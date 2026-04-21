@@ -1,5 +1,40 @@
-import { CloudEvent } from 'cloudevents';
-import { Message, toBinary, fromBinary, DescMessage } from '@bufbuild/protobuf';
+import { toBinary, fromBinary } from '@bufbuild/protobuf';
+import type { DescMessage, MessageShape } from '@bufbuild/protobuf';
+
+// ---------------------------------------------------------------------------
+// Minimal CloudEvent implementation — binary mode only.
+//
+// We don't use the 'cloudevents' npm package because it pulls in
+// @bufbuild/protobuf v1 as a transitive dependency, which conflicts with
+// the v2 we need for the generated Protobuf types.
+//
+// We only use CloudEvent as a typed envelope — no validation, no structured
+// mode serialisation. The full cloudevents SDK is unnecessary here.
+// ---------------------------------------------------------------------------
+
+export interface CloudEvent<T = unknown> {
+  readonly specversion: string;
+  readonly id: string;
+  readonly type: string;
+  readonly source: string;
+  readonly subject?: string;
+  readonly time?: string;
+  readonly datacontenttype?: string;
+  readonly data?: T;
+}
+
+let _idCounter = 0;
+function newEventId(): string {
+  return `${Date.now()}-${(++_idCounter).toString(36)}`;
+}
+
+function makeCloudEvent<T>(attrs: Omit<CloudEvent<T>, 'specversion' | 'id'> & { id?: string }): CloudEvent<T> {
+  return {
+    specversion: '1.0',
+    id: attrs.id ?? newEventId(),
+    ...attrs,
+  };
+}
 
 // The source identifier for all events originating from this tutorial system.
 const EVENT_SOURCE = '/galaxy/helka-expanse';
@@ -29,20 +64,14 @@ export type GalaxyEventType = typeof GalaxyEventType[keyof typeof GalaxyEventTyp
 
 /**
  * Creates a CloudEvent with a binary Protobuf payload.
- *
- * We use CloudEvents binary mode: the Protobuf message is serialised to bytes
- * and carried as the CloudEvent data. The CloudEvent itself will be placed in
- * Kafka headers by the producer, keeping the Kafka message value as pure
- * Protobuf bytes — clean and efficient.
  */
-export function createGalaxyEvent<T extends Message>(
+export function createGalaxyEvent<Desc extends DescMessage>(
   type: GalaxyEventType,
   subject: string,
-  schema: DescMessage<T>,
-  payload: T,
+  schema: Desc,
+  payload: MessageShape<Desc>,
 ): CloudEvent<Uint8Array> {
-  return new CloudEvent<Uint8Array>({
-    specversion: '1.0',
+  return makeCloudEvent<Uint8Array>({
     type,
     source: EVENT_SOURCE,
     subject,
@@ -55,10 +84,10 @@ export function createGalaxyEvent<T extends Message>(
 /**
  * Deserialises the Protobuf payload from a CloudEvent.
  */
-export function parseGalaxyEvent<T extends Message>(
+export function parseGalaxyEvent<Desc extends DescMessage>(
   event: CloudEvent<Uint8Array>,
-  schema: DescMessage<T>,
-): T {
+  schema: Desc,
+): MessageShape<Desc> {
   if (!event.data) {
     throw new Error(`CloudEvent ${event.id} has no data`);
   }
@@ -67,8 +96,6 @@ export function parseGalaxyEvent<T extends Message>(
 
 /**
  * Serialises a CloudEvent's attributes to Kafka message headers.
- * In binary mode, CloudEvent attributes travel as headers; the payload
- * travels as the Kafka message value.
  */
 export function cloudEventToKafkaHeaders(
   event: CloudEvent<Uint8Array>,
@@ -91,8 +118,7 @@ export function kafkaMessageToCloudEvent(
   headers: Record<string, string>,
   value: Buffer,
 ): CloudEvent<Uint8Array> {
-  return new CloudEvent<Uint8Array>({
-    specversion:     headers['ce_specversion'] ?? '1.0',
+  return makeCloudEvent<Uint8Array>({
     id:              headers['ce_id'],
     type:            headers['ce_type'],
     source:          headers['ce_source'],

@@ -1,4 +1,5 @@
 import { Kafka, Producer, Message } from 'kafkajs';
+import { create } from '@bufbuild/protobuf';
 import {
   GalaxyEventType,
   GalaxyTopic,
@@ -9,11 +10,8 @@ import {
   cloudEventToKafkaHeaders,
 } from '@kafka-tutorial/shared';
 
-// -- Generated Protobuf types (produced by buf generate) --
-// Until buf generation is run, these are imported from the generated directory.
-// See: proto/galaxy/v1/navigation.proto and fuel.proto
-import { ShipDeparted, ShipArrived, FuelRequested, FuelCompleted } from '../../../packages/shared/src/generated/galaxy/v1/navigation_pb.js';
-import { FuelRequested as FuelRequestedMsg, FuelCompleted as FuelCompletedMsg } from '../../../packages/shared/src/generated/galaxy/v1/fuel_pb.js';
+import { ShipDepartedSchema } from '../../../packages/shared/src/generated/galaxy/v1/navigation_pb.js';
+import { FuelRequestedSchema, FuelCompletedSchema } from '../../../packages/shared/src/generated/galaxy/v1/fuel_pb.js';
 
 // ---------------------------------------------------------------------------
 // Kafka client configuration
@@ -29,8 +27,6 @@ const kafka = new Kafka({
 });
 
 const producer: Producer = kafka.producer({
-  // Idempotent producer: guarantees exactly-once delivery to the broker.
-  // Requires acks: -1 (all in-sync replicas must acknowledge).
   idempotent: true,
 });
 
@@ -43,12 +39,10 @@ async function sendEvent(
   partitionKey: string,
   eventType: GalaxyEventType,
   subject: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: any,
+  fields: any,
 ): Promise<void> {
-  const event = createGalaxyEvent(eventType, subject, schema, payload);
+  const event = createGalaxyEvent(eventType, subject, schema, create(schema, fields));
   const headers = cloudEventToKafkaHeaders(event);
 
   const message: Message = {
@@ -81,7 +75,7 @@ async function scenarioShipDeparture(): Promise<void> {
     ship.id,
     GalaxyEventType.SHIP_DEPARTED,
     ship.id,
-    ShipDeparted,
+    ShipDepartedSchema,
     {
       shipId: ship.id,
       shipName: ship.name,
@@ -90,7 +84,7 @@ async function scenarioShipDeparture(): Promise<void> {
       sectorId: sector.id,
       fuelLevelPercent: 62.5,
       departedAtUnix: BigInt(Math.floor(Date.now() / 1000)),
-    } satisfies Partial<ShipDeparted>,
+    },
   );
 }
 
@@ -104,13 +98,12 @@ async function scenarioRefueling(): Promise<void> {
   const ship = Ships.KAIPAUS;
   const station = Stations.IKAVA;
 
-  // Step 1 — ship requests fuel
   await sendEvent(
     GalaxyTopic.SHIPS_FUEL,
     ship.id,
     GalaxyEventType.FUEL_REQUESTED,
     ship.id,
-    FuelRequestedMsg,
+    FuelRequestedSchema,
     {
       shipId: ship.id,
       shipName: ship.name,
@@ -118,20 +111,17 @@ async function scenarioRefueling(): Promise<void> {
       currentFuelPercent: 18.3,
       requestedFuelUnits: 450,
       requestedAtUnix: BigInt(Math.floor(Date.now() / 1000)),
-    } satisfies Partial<FuelRequestedMsg>,
+    },
   );
 
-  // Simulate processing delay — in reality the fuel coordinator
-  // would consume the FuelRequested event and emit FuelReserved.
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  // Step 2 — refueling completed
   await sendEvent(
     GalaxyTopic.SHIPS_FUEL,
     ship.id,
     GalaxyEventType.FUEL_COMPLETED,
     ship.id,
-    FuelCompletedMsg,
+    FuelCompletedSchema,
     {
       shipId: ship.id,
       shipName: ship.name,
@@ -139,7 +129,7 @@ async function scenarioRefueling(): Promise<void> {
       fuelUnitsTransferred: 450,
       finalFuelPercent: 97.1,
       completedAtUnix: BigInt(Math.floor(Date.now() / 1000)),
-    } satisfies Partial<FuelCompletedMsg>,
+    },
   );
 }
 

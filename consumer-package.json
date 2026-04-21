@@ -1,7 +1,7 @@
 {
-  "name": "@kafka-tutorial/producer",
+  "name": "@kafka-tutorial/consumer",
   "version": "1.0.0",
-  "description": "Example Kafka producer — dispatches ships into the Helka Expanse.",
+  "description": "Example Kafka consumer — monitors the Helka Expanse for ship and fuel events.",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@kafka-tutorial/shared": "*",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "@bufbuild/protobuf": "^1.10.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

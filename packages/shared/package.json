@@ -9,9 +9,8 @@
     "build": "tsc",
     "clean": "rm -rf dist"
   },
-  "dependencies": {
-    "cloudevents": "^8.0.0",
-    "@bufbuild/protobuf": "^1.10.0"
+  "peerDependencies": {
+    "@bufbuild/protobuf": "2.11.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

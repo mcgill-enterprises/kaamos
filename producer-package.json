@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@kafka-tutorial/shared": "*",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "@bufbuild/protobuf": "^1.10.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
