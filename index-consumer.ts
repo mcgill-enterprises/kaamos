@@ -5,13 +5,16 @@ import {
   ConsumerGroup,
   kafkaMessageToCloudEvent,
   parseGalaxyEvent,
-  ShipDeparted,
-  ShipArrived,
-  ShipDistressSignal,
-  FuelRequested,
-  FuelCompleted,
-  StationFuelDepleted,
 } from '@kafka-tutorial/shared';
+
+import {
+  ShipDepartedSchema, ShipArrivedSchema, ShipDistressSignalSchema,
+  type ShipDeparted, type ShipArrived, type ShipDistressSignal,
+} from './packages/shared/src/generated/galaxy/v1/navigation_pb.js';
+import {
+  FuelRequestedSchema, FuelCompletedSchema, StationFuelDepletedSchema,
+  type FuelRequested, type FuelCompleted, type StationFuelDepleted,
+} from './packages/shared/src/generated/galaxy/v1/fuel_pb.js';
 
 // ---------------------------------------------------------------------------
 // Kafka client configuration
@@ -34,7 +37,7 @@ const consumer: Consumer = kafka.consumer({
 function handleShipDeparted(event: ShipDeparted): void {
   console.log(
     `[DEPARTED] ${event.shipName} (${event.shipId}) ` +
-    `left ${event.originStationId} -> ${event.destinationStationId} ` +
+    `left ${event.originStationId} → ${event.destinationStationId} ` +
     `| fuel: ${event.fuelLevelPercent.toFixed(1)}%`,
   );
 }
@@ -88,7 +91,6 @@ function handleStationFuelDepleted(event: StationFuelDepleted): void {
 async function handleMessage({ topic, partition, message }: EachMessagePayload): Promise<void> {
   if (!message.value) return;
 
-  // Reconstruct headers as a plain string map
   const headers: Record<string, string> = {};
   for (const [key, val] of Object.entries(message.headers ?? {})) {
     if (val !== undefined) {
@@ -107,22 +109,22 @@ async function handleMessage({ topic, partition, message }: EachMessagePayload):
   try {
     switch (eventType) {
       case GalaxyEventType.SHIP_DEPARTED:
-        handleShipDeparted(parseGalaxyEvent(cloudEvent, ShipDeparted));
+        handleShipDeparted(parseGalaxyEvent(cloudEvent, ShipDepartedSchema));
         break;
       case GalaxyEventType.SHIP_ARRIVED:
-        handleShipArrived(parseGalaxyEvent(cloudEvent, ShipArrived));
+        handleShipArrived(parseGalaxyEvent(cloudEvent, ShipArrivedSchema));
         break;
       case GalaxyEventType.SHIP_DISTRESS_SIGNAL:
-        handleShipDistress(parseGalaxyEvent(cloudEvent, ShipDistressSignal));
+        handleShipDistress(parseGalaxyEvent(cloudEvent, ShipDistressSignalSchema));
         break;
       case GalaxyEventType.FUEL_REQUESTED:
-        handleFuelRequested(parseGalaxyEvent(cloudEvent, FuelRequested));
+        handleFuelRequested(parseGalaxyEvent(cloudEvent, FuelRequestedSchema));
         break;
       case GalaxyEventType.FUEL_COMPLETED:
-        handleFuelCompleted(parseGalaxyEvent(cloudEvent, FuelCompleted));
+        handleFuelCompleted(parseGalaxyEvent(cloudEvent, FuelCompletedSchema));
         break;
       case GalaxyEventType.STATION_FUEL_DEPLETED:
-        handleStationFuelDepleted(parseGalaxyEvent(cloudEvent, StationFuelDepleted));
+        handleStationFuelDepleted(parseGalaxyEvent(cloudEvent, StationFuelDepletedSchema));
         break;
       default:
         console.warn(`[WARN] Unknown event type: ${eventType}`);
